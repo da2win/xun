@@ -72,7 +72,7 @@ public class SupportAddress {
      */
     public enum Level {
         CITY("city"),
-        REGIOn("region"),;
+        REGION("region"),;
 
         private String value;
 

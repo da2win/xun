@@ -1,4 +1,4 @@
-package com.da2win.xunwu.service.house;
+package com.da2win.xunwu.web.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
