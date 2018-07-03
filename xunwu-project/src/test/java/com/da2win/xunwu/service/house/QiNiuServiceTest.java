@@ -33,4 +33,15 @@ public class QiNiuServiceTest extends ApplicationTests {
         }
     }
 
+    @Test
+    public void delete() {
+        String key = "FgMUPgqaheOdAGZpJBrlKvHgtXSt";
+        try {
+            Response response = qiNiuService.delete(key);
+            assertTrue(response.isOK());
+        } catch (QiniuException e) {
+            e.printStackTrace();
+        }
+
+    }
 }

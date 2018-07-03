@@ -1,4 +1,4 @@
-package com.imooc.config;
+package com.da2win.xunwu.config;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeansException;

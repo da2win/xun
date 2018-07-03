@@ -1,4 +1,4 @@
-package com.da2win.xunwu.web.controller.dto;
+package com.da2win.xunwu.web.dto;
 
 /**
  *

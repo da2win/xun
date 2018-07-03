@@ -2,7 +2,7 @@ package com.da2win.xunwu.web.controller.admin;
 
 import com.da2win.xunwu.base.ApiResponse;
 import com.da2win.xunwu.service.house.IQiNiuService;
-import com.da2win.xunwu.web.controller.dto.QiNiuPutRet;
+import com.da2win.xunwu.web.dto.QiNiuPutRet;
 import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
