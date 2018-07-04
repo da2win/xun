@@ -3,16 +3,22 @@ package com.da2win.xunwu.service.house.impl;
 import com.da2win.xunwu.base.LoginUserUtil;
 import com.da2win.xunwu.entity.*;
 import com.da2win.xunwu.repository.*;
+import com.da2win.xunwu.service.ServiceMultiResult;
 import com.da2win.xunwu.service.ServiceResult;
 import com.da2win.xunwu.service.house.IHouseService;
 import com.da2win.xunwu.web.dto.HouseDTO;
 import com.da2win.xunwu.web.dto.HouseDetailDTO;
 import com.da2win.xunwu.web.dto.HousePictureDTO;
+import com.da2win.xunwu.web.form.DataTableSearch;
 import com.da2win.xunwu.web.form.HouseForm;
 import com.da2win.xunwu.web.form.PhotoForm;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.jws.WebParam;
@@ -38,13 +44,15 @@ public class HouseServiceImpl implements IHouseService {
     private SubwayRepository subwayRepository;
     @Autowired
     private SubwayStationRepository subwayStationRepository;
+    @Autowired
+    private HouseTagRepository houseTagRepository;
     @Value("${qiniu.cdn.prefix}")
     private String cdnPrefix;
 
     @Override
     public ServiceResult<HouseDTO> save(HouseForm houseForm) {
         HouseDetail houseDetail = new HouseDetail();
-        ServiceResult<HouseDetail> subwayValidationResult = wrapperDetailInfo(houseDetail, houseForm);
+        ServiceResult<HouseDTO> subwayValidationResult = wrapperDetailInfo(houseDetail, houseForm);
         if (subwayValidationResult != null) {
             return subwayValidationResult;
         }
@@ -74,12 +82,29 @@ public class HouseServiceImpl implements IHouseService {
 
         List<String> tags = houseForm.getTags();
         if (tags != null && !tags.isEmpty()) {
-             List<HouseTag> houseTags = new ArrayList<>();
+            List<HouseTag> houseTags = new ArrayList<>();
             for (String tag : tags) {
                 houseTags.add(new HouseTag(house.getId(), tag));
             }
+            houseTagRepository.save(houseTags);
+            houseDTO.setTags(tags);
         }
-        return null;
+        return new ServiceResult<>(true, null, houseDTO);
+    }
+
+    @Override
+    public ServiceMultiResult<HouseDTO> adminQuery(DataTableSearch searchBody) {
+        List<HouseDTO> houseDTOS = new ArrayList<>();
+        Sort sort = new Sort(Sort.Direction.fromString(searchBody.getDirection()), searchBody.getOrderBy());
+        int page = searchBody.getStart() / searchBody.getLength();
+        Pageable pageable = new PageRequest(page, searchBody.getLength(), sort);
+        Page<House> houses = houseRepository.findAll(pageable);
+        houses.forEach(house -> {
+            HouseDTO houseDTO = modelMapper.map(house, HouseDTO.class);
+            houseDTO.setCover(this.cdnPrefix + house.getCover());
+            houseDTOS.add(houseDTO);
+        });
+        return new ServiceMultiResult<>(houses.getTotalElements(), houseDTOS);
     }
 
     private List<HousePicture> generatePictures(HouseForm form, Long houseId) {
@@ -99,7 +124,7 @@ public class HouseServiceImpl implements IHouseService {
         return pictures;
     }
 
-    private ServiceResult<HouseDetail> wrapperDetailInfo(HouseDetail houseDetail, HouseForm houseForm) {
+    private ServiceResult<HouseDTO> wrapperDetailInfo(HouseDetail houseDetail, HouseForm houseForm) {
         Subway subway = subwayRepository.findOne(houseForm.getSubwayLineId());
         if (subway == null) {
             return new ServiceResult<>(false, "Not Valid Subway Line!");
@@ -114,11 +139,12 @@ public class HouseServiceImpl implements IHouseService {
         houseDetail.setSubwayStationName(subwayStation.getName());
 
         houseDetail.setDescription(houseForm.getDescription());
-        houseDetail.setDetailAddress(houseDetail.getDetailAddress());
+        houseDetail.setDetailAddress(houseForm.getDetailAddress());
         houseDetail.setLayoutDesc(houseForm.getLayoutDesc());
         houseDetail.setRentWay(houseForm.getRentWay());
         houseDetail.setRoundService(houseForm.getRoundService());
         houseDetail.setTraffic(houseForm.getTraffic());
+
         return null;
     }
 }

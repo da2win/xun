@@ -1,7 +1,9 @@
 package com.da2win.xunwu.web.controller.admin;
 
+import com.da2win.xunwu.base.ApiDataTableResponse;
 import com.da2win.xunwu.base.ApiResponse;
 import com.da2win.xunwu.entity.SupportAddress;
+import com.da2win.xunwu.service.ServiceMultiResult;
 import com.da2win.xunwu.service.ServiceResult;
 import com.da2win.xunwu.service.house.IAddressService;
 import com.da2win.xunwu.service.house.IHouseService;
@@ -9,6 +11,7 @@ import com.da2win.xunwu.service.house.IQiNiuService;
 import com.da2win.xunwu.web.dto.HouseDTO;
 import com.da2win.xunwu.web.dto.QiNiuPutRet;
 import com.da2win.xunwu.web.dto.SupportAddressDTO;
+import com.da2win.xunwu.web.form.DataTableSearch;
 import com.da2win.xunwu.web.form.HouseForm;
 import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
@@ -31,6 +34,7 @@ import java.util.Map;
  * @date 2018/7/2
  */
 @Controller
+@RequestMapping("/admin")
 public class AdminController {
     @Autowired
     private IQiNiuService qiNiuService;
@@ -41,27 +45,27 @@ public class AdminController {
     @Autowired
     private Gson gson;
 
-    @GetMapping("/admin/center")
+    @GetMapping("/center")
     public String adminCenterPage() {
         return "admin/center";
     }
 
-    @GetMapping("/admin/welcome")
+    @GetMapping("/welcome")
     public String welcomePage() {
         return "admin/welcome";
     }
 
-    @GetMapping("/admin/login")
+    @GetMapping("/login")
     public String adminLoginPage() {
         return "admin/login";
     }
 
-    @GetMapping("admin/add/house")
+    @GetMapping("/add/house")
     public String addHousePage() {
         return "admin/house-add";
     }
 
-    @PostMapping(value = "admin/upload/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/upload/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseBody
     public ApiResponse uploadPhoto(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
@@ -90,7 +94,12 @@ public class AdminController {
         }
     }
 
-    @PostMapping("admin/add/house")
+    @GetMapping("/house/list")
+    public String houseListPage() {
+        return "admin/house-list";
+    }
+
+    @PostMapping("/add/house")
     @ResponseBody
     public ApiResponse addHouse(@Valid @ModelAttribute("form-house-add") HouseForm houseForm, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
@@ -109,5 +118,17 @@ public class AdminController {
             return ApiResponse.ofSuccess(result.getResult());
         }
         return ApiResponse.ofStatus(ApiResponse.Status.NOT_VALID_PARAM);
+    }
+
+    @PostMapping("/houses")
+    @ResponseBody
+    public ApiDataTableResponse houses(@ModelAttribute DataTableSearch searchBody) {
+        ServiceMultiResult<HouseDTO> result = houseService.adminQuery(searchBody);
+        ApiDataTableResponse response = new ApiDataTableResponse(ApiResponse.Status.SUCCESS);
+        response.setData(result.getResult());
+        response.setRecordsFiltered(result.getTotal());
+        response.setRecordsTotal(result.getTotal());
+        response.setDraw(searchBody.getDraw());
+        return response;
     }
 }
