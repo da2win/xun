@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class LoginUserUtil {
     public static User load() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal == null && principal instanceof User) {
+        if (principal != null && principal instanceof User) {
             return (User) principal;
         }
         return null;

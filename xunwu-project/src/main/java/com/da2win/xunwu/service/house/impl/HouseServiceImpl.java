@@ -13,6 +13,7 @@ import com.da2win.xunwu.web.dto.HousePictureDTO;
 import com.da2win.xunwu.web.form.DataTableSearch;
 import com.da2win.xunwu.web.form.HouseForm;
 import com.da2win.xunwu.web.form.PhotoForm;
+import com.da2win.xunwu.web.form.RentSearch;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -128,6 +129,11 @@ public class HouseServiceImpl implements IHouseService {
             houseDTOS.add(houseDTO);
         });
         return new ServiceMultiResult<>(houses.getTotalElements(), houseDTOS);
+    }
+
+    @Override
+    public ServiceMultiResult<HouseDTO> query(RentSearch rentSearch) {
+        return null;
     }
 
     private List<HousePicture> generatePictures(HouseForm form, Long houseId) {
