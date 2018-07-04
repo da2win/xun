@@ -1,25 +1,32 @@
 package com.da2win.xunwu.web.controller.admin;
 
 import com.da2win.xunwu.base.ApiResponse;
+import com.da2win.xunwu.entity.SupportAddress;
+import com.da2win.xunwu.service.ServiceResult;
+import com.da2win.xunwu.service.house.IAddressService;
+import com.da2win.xunwu.service.house.IHouseService;
 import com.da2win.xunwu.service.house.IQiNiuService;
+import com.da2win.xunwu.web.dto.HouseDTO;
 import com.da2win.xunwu.web.dto.QiNiuPutRet;
+import com.da2win.xunwu.web.dto.SupportAddressDTO;
+import com.da2win.xunwu.web.form.HouseForm;
 import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
 import com.qiniu.http.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 /**
- *
  * @author Darwin
  * @date 2018/7/2
  */
@@ -27,6 +34,10 @@ import java.io.InputStream;
 public class AdminController {
     @Autowired
     private IQiNiuService qiNiuService;
+    @Autowired
+    private IAddressService addressService;
+    @Autowired
+    private IHouseService houseService;
     @Autowired
     private Gson gson;
 
@@ -52,7 +63,7 @@ public class AdminController {
 
     @PostMapping(value = "admin/upload/photo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseBody
-    public ApiResponse uploadPhoto(@RequestParam("file")MultipartFile file) {
+    public ApiResponse uploadPhoto(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return ApiResponse.ofStatus(ApiResponse.Status.NOT_VALID_PARAM);
         }
@@ -66,7 +77,7 @@ public class AdminController {
             } else {
                 return ApiResponse.ofMessage(response.statusCode, response.getInfo());
             }
-        } catch(QiniuException e) {
+        } catch (QiniuException e) {
             Response response = e.response;
             try {
                 return ApiResponse.ofMessage(response.statusCode, response.bodyString());
@@ -77,5 +88,26 @@ public class AdminController {
         } catch (IOException e) {
             return ApiResponse.ofStatus(ApiResponse.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping("admin/add/house")
+    @ResponseBody
+    public ApiResponse addHouse(@Valid @ModelAttribute("form-house-add") HouseForm houseForm, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return new ApiResponse(HttpStatus.BAD_REQUEST.value(), bindingResult.getAllErrors().get(0).getDefaultMessage(), null);
+        }
+        if (houseForm.getPhotos() == null || houseForm.getCover() == null) {
+            return ApiResponse.ofMessage(HttpStatus.BAD_REQUEST.value(), "必须上传图片");
+        }
+
+        Map<SupportAddress.Level, SupportAddressDTO> addressMap = addressService.findCityAndRegion(houseForm.getCityEnName(), houseForm.getRegionEnName());
+        if (addressMap.keySet().size() != 2) {
+            return ApiResponse.ofStatus(ApiResponse.Status.NOT_VALID_PARAM);
+        }
+        ServiceResult<HouseDTO> result = houseService.save(houseForm);
+        if (result.isSuccess()) {
+            return ApiResponse.ofSuccess(result.getResult());
+        }
+        return ApiResponse.ofStatus(ApiResponse.Status.NOT_VALID_PARAM);
     }
 }
