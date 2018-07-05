@@ -53,6 +53,8 @@ public class HouseServiceImpl implements IHouseService {
     private SubwayStationRepository subwayStationRepository;
     @Autowired
     private HouseTagRepository houseTagRepository;
+    @Autowired
+    private HouseSubscribeRepository subscribeRepository;
     @Value("${qiniu.cdn.prefix}")
     private String cdnPrefix;
 
@@ -165,6 +167,45 @@ public class HouseServiceImpl implements IHouseService {
 
         wrapperHouseList(houseIds, idToHouseMap);
         return new ServiceMultiResult<>(houses.getTotalElements(), houseDTOS);
+    }
+
+    @Override
+    public ServiceResult<HouseDTO> findCompleteOne(Long id) {
+        House house = houseRepository.findOne(id);
+        if (house == null) {
+            return ServiceResult.notFound();
+        }
+
+        HouseDetail detail = houseDetailRepository.findByHouseId(id);
+        List<HousePicture> pictures = housePictureRepository.findAllByHouseId(id);
+
+        HouseDetailDTO detailDTO = modelMapper.map(detail, HouseDetailDTO.class);
+        List<HousePictureDTO> pictureDTOS = new ArrayList<>();
+        for (HousePicture picture : pictures) {
+            HousePictureDTO pictureDTO = modelMapper.map(picture, HousePictureDTO.class);
+            pictureDTOS.add(pictureDTO);
+        }
+
+
+        List<HouseTag> tags = houseTagRepository.findAllByHouseId(id);
+        List<String> tagList = new ArrayList<>();
+        for (HouseTag tag : tags) {
+            tagList.add(tag.getName());
+        }
+
+        HouseDTO result = modelMapper.map(house, HouseDTO.class);
+        result.setHouseDetail(detailDTO);
+        result.setPictures(pictureDTOS);
+        result.setTags(tagList);
+
+        if (LoginUserUtil.getLoginUserId() > 0) { // 已登录用户
+            HouseSubscribe subscribe = subscribeRepository.findByHouseIdAndUserId(house.getId(), LoginUserUtil.getLoginUserId());
+            if (subscribe != null) {
+                result.setSubscribeStatus(subscribe.getStatus());
+            }
+        }
+
+        return ServiceResult.of(result);
     }
 
     /**

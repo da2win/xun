@@ -1,6 +1,7 @@
 package com.da2win.xunwu.service;
 
 import com.da2win.xunwu.entity.User;
+import com.da2win.xunwu.web.dto.UserDTO;
 
 /**
  *
@@ -9,4 +10,6 @@ import com.da2win.xunwu.entity.User;
  */
 public interface IUserService {
     User findUserByName(String userName);
+
+    ServiceResult<UserDTO> findById(Long userId);
 }

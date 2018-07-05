@@ -13,4 +13,6 @@ import java.util.List;
 public interface HouseDetailRepository extends CrudRepository<HouseDetail, Long> {
 
     List<HouseDetail> findAllByHouseIdIn(List<Long> houseIds);
+
+    HouseDetail findByHouseId(Long id);
 }
