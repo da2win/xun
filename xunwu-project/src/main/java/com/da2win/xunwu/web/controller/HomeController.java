@@ -1,19 +1,16 @@
 package com.da2win.xunwu.web.controller;
 
-import com.da2win.xunwu.base.ApiResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 /**
- *
  * @author Darwin
  * @date 2018/6/29
  */
 @Controller
 public class HomeController {
-    @GetMapping("/")
+    @GetMapping(value = {"/", "/index"})
     public String index(Model model) {
         return "index";
 

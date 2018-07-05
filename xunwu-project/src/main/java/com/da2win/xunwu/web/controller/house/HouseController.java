@@ -1,7 +1,9 @@
 package com.da2win.xunwu.web.controller.house;
 
 import com.da2win.xunwu.base.ApiResponse;
+import com.da2win.xunwu.base.RentValueBlock;
 import com.da2win.xunwu.service.ServiceMultiResult;
+import com.da2win.xunwu.service.ServiceResult;
 import com.da2win.xunwu.service.house.IAddressService;
 import com.da2win.xunwu.service.house.IHouseService;
 import com.da2win.xunwu.web.dto.HouseDTO;
@@ -107,6 +109,13 @@ public class HouseController {
         } else {
             session.setAttribute("cityEnName", rentSearch.getCityEnName());
         }
+
+        ServiceResult<SupportAddressDTO> city = addressService.findCity(rentSearch.getCityEnName());
+        if (!city.isSuccess()) {
+            redirectAttributes.addAttribute("msg", "must_choose_city");
+            return "redirect:/index";
+        }
+        model.addAttribute("currentCity", city.getResult());
         ServiceMultiResult addressResult = addressService.findAllRegionsByCityName(rentSearch.getCityEnName());
         if (addressResult.getResult() == null || addressResult.getTotal() < 1) {
             redirectAttributes.addAttribute("msg", "must_choose_city");
@@ -114,12 +123,18 @@ public class HouseController {
         }
         ServiceMultiResult<HouseDTO> serviceMultiResult = houseService.query(rentSearch);
         model.addAttribute("total", serviceMultiResult.getTotal());
-        model.addAttribute("houses", new ArrayList());
+        model.addAttribute("houses", serviceMultiResult.getResult());
         if (rentSearch.getRegionEnName() == null) {
             rentSearch.setRegionEnName("*");
         }
         model.addAttribute("searchBody", rentSearch);
         model.addAttribute("regions", addressResult.getResult());
+
+        model.addAttribute("priceBlocks", RentValueBlock.PRICE_BLOCK);
+        model.addAttribute("areaBlocks", RentValueBlock.AREA_BLOCK);
+
+        model.addAttribute("currentPriceBlock", RentValueBlock.matchPrice(rentSearch.getPriceBlock()));
+        model.addAttribute("currentAreaBlock", RentValueBlock.matchArea(rentSearch.getAreaBlock()));
 
         return "rent-list";
     }
