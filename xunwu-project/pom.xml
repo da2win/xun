@@ -22,7 +22,8 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
-
+		<!-- 使用自定义ES 版本 -->
+		<elasticsearch.version>5.6.0</elasticsearch.version>
         <!-- thymeleaf 覆盖parent 选择自己的版本 -->
         <thymeleaf.version>3.0.3.RELEASE</thymeleaf.version>
         <thymeleaf-layout-dialect.version>2.1.1</thymeleaf-layout-dialect.version>
@@ -135,11 +136,11 @@
 		</dependency>
 
 		<!-- ES -->
-		<!--<dependency>-->
-			<!--<groupId>org.elasticsearch.client</groupId>-->
-			<!--<artifactId>transport</artifactId>-->
-			<!--<version>${elasticsearch.version}</version>-->
-		<!--</dependency>-->
+		<dependency>
+			<groupId>org.elasticsearch.client</groupId>
+			<artifactId>transport</artifactId>
+			<version>${elasticsearch.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
