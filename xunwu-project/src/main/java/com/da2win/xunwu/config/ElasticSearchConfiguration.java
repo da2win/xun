@@ -3,6 +3,7 @@ package com.da2win.xunwu.config;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -23,6 +24,8 @@ public class ElasticSearchConfiguration {
                 .put("client.transport.sniff", true)
                 .build();
         InetSocketTransportAddress master = new InetSocketTransportAddress(InetAddress.getByName("127.0.0.1"), 9300);
-        TransportClient client = new PreBuiltTransportClient(setting);
+        TransportClient client = new PreBuiltTransportClient(settings)
+                                .addTransportAddress(master);
+        return client;
     }
 }
