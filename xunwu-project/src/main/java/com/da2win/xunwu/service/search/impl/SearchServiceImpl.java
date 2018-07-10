@@ -22,7 +22,6 @@ import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.DeleteByQueryRequestBuilder;
 import org.elasticsearch.rest.RestStatus;
-import org.elasticsearch.search.SearchHits;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -162,4 +161,5 @@ public class SearchServiceImpl implements ISearchService {
         long deleted = response.getDeleted();
         logger.debug("Delete total " + deleted);
     }
+
 }

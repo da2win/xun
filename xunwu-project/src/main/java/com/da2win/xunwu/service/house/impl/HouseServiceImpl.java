@@ -8,6 +8,7 @@ import com.da2win.xunwu.repository.*;
 import com.da2win.xunwu.service.ServiceMultiResult;
 import com.da2win.xunwu.service.ServiceResult;
 import com.da2win.xunwu.service.house.IHouseService;
+import com.da2win.xunwu.service.search.ISearchService;
 import com.da2win.xunwu.web.dto.HouseDTO;
 import com.da2win.xunwu.web.dto.HouseDetailDTO;
 import com.da2win.xunwu.web.dto.HousePictureDTO;
@@ -25,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.jws.WebParam;
 import javax.persistence.criteria.Predicate;
@@ -55,8 +57,45 @@ public class HouseServiceImpl implements IHouseService {
     private HouseTagRepository houseTagRepository;
     @Autowired
     private HouseSubscribeRepository subscribeRepository;
+    @Autowired
+    private ISearchService searchService;
     @Value("${qiniu.cdn.prefix}")
     private String cdnPrefix;
+
+    @Override
+    public ServiceResult update(HouseForm houseForm) {
+        House house = this.houseRepository.findOne(houseForm.getId());
+        if (house == null) {
+            return ServiceResult.notFound();
+        }
+
+        HouseDetail detail = this.houseDetailRepository.findByHouseId(house.getId());
+        if (detail == null) {
+            return ServiceResult.notFound();
+        }
+
+        ServiceResult wrapperResult = wrapperDetailInfo(detail, houseForm);
+        if (wrapperResult != null) {
+            return wrapperResult;
+        }
+
+        houseDetailRepository.save(detail);
+
+        List<HousePicture> pictures = generatePictures(houseForm, houseForm.getId());
+        housePictureRepository.save(pictures);
+
+        if (houseForm.getCover() == null) {
+            houseForm.setCover(house.getCover());
+        }
+
+        modelMapper.map(houseForm, house);
+        house.setLastUpdateTime(new Date());
+        houseRepository.save(house);
+        if (house.getStatus() == HouseStatus.PASSES.getValue()) {
+            searchService.index(house.getId());
+        }
+        return ServiceResult.success();
+    }
 
     @Override
     public ServiceResult<HouseDTO> save(HouseForm houseForm) {
@@ -266,5 +305,36 @@ public class HouseServiceImpl implements IHouseService {
         houseDetail.setTraffic(houseForm.getTraffic());
 
         return null;
+    }
+
+    @Override
+    @Transactional
+    public ServiceResult updateStatus(Long id, int status) {
+        House house = houseRepository.findOne(id);
+        if (house == null) {
+            return ServiceResult.notFound();
+        }
+
+        if (house.getStatus() == status) {
+            return new ServiceResult(false, "状态没有发生变化");
+        }
+
+        if (house.getStatus() == HouseStatus.RENTED.getValue()) {
+            return new ServiceResult(false, "已出租的房源不允许修改状态");
+        }
+
+        if (house.getStatus() == HouseStatus.DELETED.getValue()) {
+            return new ServiceResult(false, "已删除的资源不允许操作");
+        }
+
+        houseRepository.updateStatus(id, status);
+
+        // 上架更新索引 其他情况都要删除索引
+        if (status == HouseStatus.PASSES.getValue()) {
+            searchService.index(id);
+        } else {
+            searchService.remove(id);
+        }
+        return ServiceResult.success();
     }
 }
