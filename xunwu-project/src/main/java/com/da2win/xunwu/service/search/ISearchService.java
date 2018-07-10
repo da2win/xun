@@ -10,7 +10,7 @@ public interface ISearchService {
      * 索引目标房源
      * @param houseId
      */
-    boolean index(Long houseId);
+    void index(Long houseId);
 
     /**
      * 移除房源

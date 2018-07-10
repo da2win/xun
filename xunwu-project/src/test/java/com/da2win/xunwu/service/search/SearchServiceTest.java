@@ -17,8 +17,7 @@ public class SearchServiceTest extends ApplicationTests {
     @Test
     public void index() throws Exception {
         Long targetHouseId = 15L;
-        boolean success = searchService.index(targetHouseId);
-        Assert.assertTrue(success);
+        searchService.index(targetHouseId);
     }
 
     @Test
