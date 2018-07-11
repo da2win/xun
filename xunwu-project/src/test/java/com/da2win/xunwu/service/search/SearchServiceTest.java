@@ -1,6 +1,8 @@
 package com.da2win.xunwu.service.search;
 
 import com.da2win.xunwu.ApplicationTests;
+import com.da2win.xunwu.service.ServiceMultiResult;
+import com.da2win.xunwu.web.form.RentSearch;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,4 +28,13 @@ public class SearchServiceTest extends ApplicationTests {
         searchService.remove(targetHouseId);
     }
 
+    @Test
+    public void query() throws Exception {
+        RentSearch rentSearch = new RentSearch();
+        rentSearch.setCityEnName("bj");
+        rentSearch.setStart(0);
+        rentSearch.setSize(10);
+        ServiceMultiResult<Long> serviceMultiResult = searchService.query(rentSearch);
+        Assert.assertEquals(9, serviceMultiResult.getTotal());
+    }
 }

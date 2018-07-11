@@ -9,4 +9,6 @@ package com.da2win.xunwu.service.search;
 public class HouseIndexKey {
     public static final String HOUSE_ID = "houseId";
     public static final String TITLE = "title";
+    public static final String CITY_EN_NAME = "cityEnName";
+    public static final String REGION_EN_NAME = "regionEnName";
 }

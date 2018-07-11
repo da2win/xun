@@ -1,28 +1,35 @@
 package com.da2win.xunwu.service.search.impl;
 
+import com.da2win.xunwu.base.HouseSort;
 import com.da2win.xunwu.entity.House;
 import com.da2win.xunwu.entity.HouseDetail;
 import com.da2win.xunwu.entity.HouseTag;
 import com.da2win.xunwu.repository.HouseDetailRepository;
 import com.da2win.xunwu.repository.HouseRepository;
 import com.da2win.xunwu.repository.HouseTagRepository;
+import com.da2win.xunwu.service.ServiceMultiResult;
 import com.da2win.xunwu.service.search.HouseIndexKey;
 import com.da2win.xunwu.service.search.HouseIndexMessage;
 import com.da2win.xunwu.service.search.HouseIndexTemplate;
 import com.da2win.xunwu.service.search.ISearchService;
+import com.da2win.xunwu.web.form.RentSearch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.primitives.Longs;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.index.reindex.DeleteByQueryRequestBuilder;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.SortOrder;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -213,6 +220,43 @@ public class SearchServiceImpl implements ISearchService {
     @Override
     public void remove(Long houseId) {
         this.remove(houseId, 0);
+    }
+
+    @Override
+    public ServiceMultiResult<Long> query(RentSearch rentSearch) {
+        BoolQueryBuilder boolBuilder = QueryBuilders.boolQuery();
+
+        boolBuilder.filter(
+                QueryBuilders.termQuery(HouseIndexKey.CITY_EN_NAME, rentSearch.getCityEnName())
+        );
+        if (rentSearch.getRegionEnName() != null && "*".equals(rentSearch.getRegionEnName())) {
+            boolBuilder.filter(
+                    QueryBuilders.termQuery(HouseIndexKey.REGION_EN_NAME, rentSearch.getRegionEnName())
+            );
+        }
+        SearchRequestBuilder requestBuilder = this.esClient.prepareSearch(INDEX_NAME)
+                .setTypes(INDEX_TYPE)
+                .setQuery(boolBuilder)
+                .addSort(HouseSort.getSortKey(rentSearch.getOrderBy()),
+                        SortOrder.fromString(rentSearch.getOrderDirection())
+                )
+                .setFrom(rentSearch.getStart())
+                .setSize(rentSearch.getSize());
+        logger.debug(requestBuilder.toString());
+
+        List<Long> houseIds = new ArrayList<>();
+        SearchResponse response = requestBuilder.get();
+        if (response.status() != RestStatus.OK) {
+            logger.warn("Search status is not ok for " + requestBuilder);
+            new ServiceMultiResult<>(0, houseIds);
+        }
+
+        for (SearchHit searchHit : response.getHits()) {
+            houseIds.add(
+                    Longs.tryParse(String.valueOf(searchHit.getSource().get(HouseIndexKey.HOUSE_ID)))
+            );
+        }
+        return new ServiceMultiResult(response.getHits().totalHits, houseIds);
     }
 
     private void remove(Long houseId, int retry) {
