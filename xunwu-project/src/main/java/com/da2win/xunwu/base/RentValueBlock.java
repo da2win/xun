@@ -87,4 +87,13 @@ public class RentValueBlock {
         }
         return block;
     }
+
+    @Override
+    public String toString() {
+        return "RentValueBlock{" +
+                "key='" + key + '\'' +
+                ", min=" + min +
+                ", max=" + max +
+                '}';
+    }
 }
