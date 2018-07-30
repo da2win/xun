@@ -8,6 +8,7 @@ import com.da2win.xunwu.service.ServiceMultiResult;
 import com.da2win.xunwu.service.ServiceResult;
 import com.da2win.xunwu.service.house.IAddressService;
 import com.da2win.xunwu.service.house.IHouseService;
+import com.da2win.xunwu.service.search.ISearchService;
 import com.da2win.xunwu.web.dto.*;
 import com.da2win.xunwu.web.form.RentSearch;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +34,23 @@ public class HouseController {
     private IHouseService houseService;
     @Autowired
     private IUserService userService;
+    @Autowired
+    private ISearchService searchService;
+
+    /**
+     * 自动补全接口
+     * @return
+     */
+    @GetMapping("rent/house/autocomplete")
+    @ResponseBody
+    public ApiResponse autocomplete(@RequestParam(value = "prefix") String prefix) {
+        if (prefix.isEmpty()) {
+            return ApiResponse.ofStatus(ApiResponse.Status.BAD_REQUEST);
+        }
+        ServiceResult<List<String>> result = searchService.suggest(prefix);
+        return ApiResponse.ofSuccess(result.getResult());
+    }
+
 
     @GetMapping("address/support/cities")
     @ResponseBody
@@ -157,7 +176,8 @@ public class HouseController {
         model.addAttribute("city", city);
         model.addAttribute("region", region);
 
-        model.addAttribute("houseCountInDistrict", 0);
+        ServiceResult<Long> aggResult = searchService.aggregateDistrictHouse(city.getEnName(), region.getEnName(), houseDTO.getDistrict());
+        model.addAttribute("houseCountInDistrict", aggResult.getResult());
 
         return "house-detail";
     }

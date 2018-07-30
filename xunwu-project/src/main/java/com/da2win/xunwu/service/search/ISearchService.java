@@ -1,7 +1,10 @@
 package com.da2win.xunwu.service.search;
 
 import com.da2win.xunwu.service.ServiceMultiResult;
+import com.da2win.xunwu.service.ServiceResult;
 import com.da2win.xunwu.web.form.RentSearch;
+
+import java.util.List;
 
 /**
  *
@@ -28,4 +31,13 @@ public interface ISearchService {
      */
     ServiceMultiResult<Long> query(RentSearch rentSearch);
 
+    /**
+     * 获取补全建议关键字
+     */
+    ServiceResult<List<String>> suggest(String prefix);
+
+    /**
+     * 聚合特定小区的房间数
+     */
+    ServiceResult<Long> aggregateDistrictHouse(String cityEnName, String regionEnName, String district);
 }

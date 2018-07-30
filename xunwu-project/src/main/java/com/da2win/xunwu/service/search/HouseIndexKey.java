@@ -20,4 +20,5 @@ public class HouseIndexKey {
     public static final String PRICE = "price";
     public static final String DIRECTION = "direction";
     public static final String RENT_WAY = "rentWay";
+    public static final String AGG_DISTRICT = "agg_district";
 }
